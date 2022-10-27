@@ -1,0 +1,5 @@
+.ipynb_checkpoints/*
+__pycache__/*
+secret.json
+token.json
+token.pickle
