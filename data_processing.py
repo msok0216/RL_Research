@@ -10,35 +10,26 @@ def preprocessing(idx):
 
     curr_speaker = ' '
     is_firstSpeaker = False
-    temp = list[idx][['Combined', 'IDE State', 'Dialogue State', 'Intent', 'Delivery', 'Action', 'Who', 'Stage', 'Tone']].values
+    temp = list[idx][['Speaker','Combined', 'IDE State', 'Dialogue State', 'Intent', 'Delivery', 'Action', 'Who', 'Stage', 'Tone']].values
     # temp = list[idx].values
     # print(temp)
     for row in temp:
-        if row[4] != curr_speaker:
-            curr_speaker = row[4]
+        if row[0] != curr_speaker:
+            curr_speaker = row[0]
             is_firstSpeaker = not is_firstSpeaker
             if is_firstSpeaker:
                 first_speaker.append([])
             else:
                 second_speaker.append([])
-        if is_firstSpeaker: first_speaker[-1].append(row)
-        else: second_speaker[-1].append(row)
+        
+        for i in range(len(row)):
+            if row[i] is None:
+                row[i] = ""
+        if is_firstSpeaker: first_speaker[-1].append(row[1:])
+        else: second_speaker[-1].append(row[1:])
     
     # print(first_speaker)
     return first_speaker,second_speaker
-
-def prev_utterance():
-    data = []
-    for i in list:
-        input = []
-        output = []
-        row = i.values
-        for j in range(len(row)-1):
-            input.append(row[j])
-            output.append(row[j+1])
-        
-        data.append((input, output))
-    return data
 
 
 
@@ -47,11 +38,11 @@ def last_different_speaker_utterance(first, second):
     input = []
     output = []
     while i < len(second):
-        input.append(first[i][-1])
-        output.append(second[i][0])
+        input.append(first[i][-1].tolist())
+        output.append(second[i][0].tolist())
         if i + 1 < len(first):
-            input.append(second[i][-1])
-            output.append(first[i][0])
+            input.append(second[i][-1].tolist())
+            output.append(first[i][0].tolist())
         i+=1
     return input, output
 
@@ -61,17 +52,18 @@ def last_same_speaker_utterance(first, second):
     input = []
     output = []
     for i in range(len(first)-1):
-        input.append(first[i])
-        output.append(first[i+1])
+        input.append(first[i][-1].tolist())
+        output.append(first[i+1][0].tolist())
     for i in range(len(second)-1):
-        input.append(second[i])
-        output.append(second[i+1])
+        input.append(second[i][-1].tolist())
+        output.append(second[i+1][0].tolist())
     return input, output
 
 
 # print(len(prev_x), len(prev_y))
 # print(len(last_diff_x), len(last_diff_y))
 # print(len(last_same_x), len(last_same_y))
+
 
 
 from sklearn import preprocessing as sklearn_preprocessing
@@ -84,9 +76,9 @@ lb = sklearn_preprocessing.LabelEncoder()
 one_hot = sklearn_preprocessing.OneHotEncoder()
 ordinal = sklearn_preprocessing.OrdinalEncoder()
 
-
-# preprocessed_data = []
-# for i in range(len(list)):
+first,second = preprocessing(0)
+x, y = last_same_speaker_utterance(first, second)
+print(len(y), len(y[0]))
 
 
 
@@ -113,10 +105,32 @@ def ldsu_data(processed_data):
         data.append((input, output))
     return data
 
+def prev_data():
+    data = []
 
-for i in range(9):
-    if (i == 1): continue
-    preprocessing(i)
+    for i,sheet in enumerate(list):
+        if i != 1:
+            temp = sheet[['Combined', 'IDE State', 'Dialogue State', 'Intent', 'Delivery', 'Action', 'Who', 'Stage', 'Tone']].values
+            input = []
+            output = []
+            for j, row in enumerate(temp):
+                for k in range(len(row)):
+                    if row[k] is None:
+                        row[k] = ''
+                if j % 2 == 0:
+                    input.append(row)
+                else:
+                    output.append(row)        
+            if len(input) > len(output):
+                input = input[:-1]
+            data.append((input, output))
+        
+
+    return data
+
+# for i in range(9):
+#     if (i == 1): continue
+#     preprocessing(i)
 # preprocessing(1)
 
 
