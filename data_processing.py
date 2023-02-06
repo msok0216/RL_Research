@@ -1,7 +1,37 @@
-from setup import get_data
+from setup import get_data, get_additional_data
 import pandas as pd
 
 list = get_data()
+
+
+# Replace IDE States
+def replace_idestate(df):
+    df.replace("D3", "D1", inplace=True)
+    df.replace("D22", "D1", inplace=True)
+
+    df.replace("D28", "D5", inplace=True)
+
+    for i in range(7,17):
+        s = "D" + str(i)
+        df.replace(s, "D6", inplace=True)
+    df.replace("D24", "D6", inplace=True)
+    df.replace("D26", "D6", inplace=True)
+    df.replace("D30", "D6", inplace=True)
+    df.replace("D33", "D6", inplace=True)
+    df.replace("D35", "D6", inplace=True)
+    df.replace("D36", "D6", inplace=True)
+    for i in range(41,46):
+        s = "D" + str(i)
+        df.replace(s, "D6", inplace=True)
+    df.replace("D47", "D6", inplace=True)
+    df.replace("D21", "D19", inplace=True)
+    df.replace("D27", "D23", inplace=True)
+    for i in range(37,41):
+        s = "D" + str(i)
+        df.replace(s, "D23", inplace=True)
+    df.replace("D34", 'D32', inplace=True)
+    df.replace("D25", 'D32', inplace=True)
+    # print(df)
 
 
 def preprocessing(idx):
@@ -31,6 +61,36 @@ def preprocessing(idx):
     # print(first_speaker)
     return first_speaker,second_speaker
 
+def load_woz_data():
+    list = get_additional_data()
+    ans = []
+    for i in range(len(list)):
+        first_speaker = []
+        second_speaker = []
+
+        curr_speaker = ' '
+        is_firstSpeaker = False
+        temp = list[i][['Speaker','Combined', 'IDE State', 'Dialogue State', 'Intent', 'Delivery', 'Action', 'Who', 'Stage', 'Tone']].values
+        # temp = list[idx].values
+        # print(temp)
+        for row in temp:
+            if row[0] != curr_speaker:
+                curr_speaker = row[0]
+                is_firstSpeaker = not is_firstSpeaker
+                if is_firstSpeaker:
+                    first_speaker.append([])
+                else:
+                    second_speaker.append([])
+            
+            for i in range(len(row)):
+                if row[i] is None:
+                    row[i] = ""
+            if is_firstSpeaker: first_speaker[-1].append(row[1:])
+            else: second_speaker[-1].append(row[1:])
+
+        # print(first_speaker)
+        ans.append((first_speaker, second_speaker))
+    return ans
 
 
 def last_different_speaker_utterance(first, second):
@@ -76,9 +136,9 @@ lb = sklearn_preprocessing.LabelEncoder()
 one_hot = sklearn_preprocessing.OneHotEncoder()
 ordinal = sklearn_preprocessing.OrdinalEncoder()
 
-first,second = preprocessing(0)
-x, y = last_same_speaker_utterance(first, second)
-print(len(y), len(y[0]))
+# first,second = preprocessing(0)
+# x, y = last_same_speaker_utterance(first, second)
+# print(len(y), len(y[0]))
 
 
 
@@ -128,119 +188,87 @@ def prev_data():
 
     return data
 
-# for i in range(9):
-#     if (i == 1): continue
-#     preprocessing(i)
-# preprocessing(1)
 
+def raw_data():
+    for i in range(len(list)):
+        replace_idestate(list[i])
+    # print(len(list))
+    return list
 
-# last_diff_x, last_diff_y = last_different_speaker_utterance(first, second)
-# test_last_diff_x, test_last_diff_y = last_different_speaker_utterance(first_test, second_test)
-# last_same_x, last_same_y = last_same_speaker_utterance(first, second)
+def preprocessed_ide(idx):
+    first_speaker = []
+    second_speaker = []
 
-# test = [x[26:] for x in last_diff_x]
-# test_y = [x[26] for x in last_diff_y]
+    curr_speaker = ' '
+    is_firstSpeaker = False
+    temp = list[idx][['Speaker','IDE State']].values
+    # temp = list[idx].values
+    # print(temp)
+    for row in temp:
+        if row[0] != curr_speaker:
+            curr_speaker = row[0]
+            is_firstSpeaker = not is_firstSpeaker
+            if is_firstSpeaker:
+                first_speaker.append([])
+            else:
+                second_speaker.append([])
+        
+        # for i in range(len(row)):
+        if row[1] is None or len(str(row[1])) < 2:
+            row[1] = 0
+        if not isinstance(row[1], int):
+            if len(row[1]) < 4:
+                row[1] = row[1][1:]
+            else:
+                row[1] = row[1][:3]
+                row[1] = row[1].replace('D', '')
+                row[1] = row[1].replace('E', '')
 
-# lb = sklearn_preprocessing.OneHotEncoder()
-# lb.fit_transform(test)
-# # lb.transform(test)
-# y_lb = sklearn_preprocessing.LabelEncoder()
-# y_lb.fit_transform(test_y)
-# # lb.transform(test_y)
+        if is_firstSpeaker: first_speaker[-1].append(int(row[1]))
+        else: second_speaker[-1].append(int(row[1]))
+    
+    # print(first_speaker)
+    return first_speaker,second_speaker
 
-# temp = []
-# for i in range(len(test)):
-#     for j in range(len(test[i])):
-#         if test[i][j] is None:
-#             test[i][j] = ""
+def preprocessed_dialogue(idx):
+    first_speaker = []
+    second_speaker = []
 
+    curr_speaker = ' '
+    is_firstSpeaker = False
+    temp = list[idx][['Speaker','Dialogue State']].values
+    # temp = list[idx].values
+    # print(temp)
+    # print(len(temp))
+    for row in temp:
+        # print(curr_speaker, row)
+        if row[0] != curr_speaker:
+            curr_speaker = row[0]
+            is_firstSpeaker = not is_firstSpeaker
+            if is_firstSpeaker:
+                first_speaker.append([])
+            else:
+                second_speaker.append([])
+        
+        for i in range(len(row)):
+            if row[i] is None:
+                row[i] = 0
+        if is_firstSpeaker: first_speaker[-1].append(int(row[1][1:]))
+        else: second_speaker[-1].append(int(row[1][1:]))
+    
+    # print(first_speaker)
+    return first_speaker,second_speaker
 
-# x_train, x_test, y_train, y_test = label_encoding(test, test, test_y, test_y)
-
-# tree = DecisionTreeClassifier()
-# tree.fit(x_train, y_train)
-# print(tree.score(x_test, y_test))
-
-# print(prev_x[0])
-# last_diff_x = [lb.fit_transform(x) for x in last_diff_x]
-# # last_diff_x = scaler.fit_transform(last_diff_x)
-# # print(last_diff_x)
-
-
-# last_diff_y = [y[25] for y in last_diff_y]
-# last_diff_y = lb.fit_transform(last_diff_y)
-
-# last_diff_y = last_diff_y.reshape(-1,1)
-# # print(last_diff_y)
-
-# # last_diff_y = [lb.fit_transform(y) for y in last_diff_y]
-# # last_diff_y = scaler.fit_transform(last_diff_y)
-# # print(last_diff_y)
-
-# test_first, test_second = preprocessing(0)
-# test_last_diff_x, test_last_diff_y = last_different_speaker_utterance(test_first, test_second) 
-
-# test_last_diff_x = [lb.fit_transform(x) for x in test_last_diff_x]
-# # test_last_diff_x = scaler.fit_transform(test_last_diff_x)
-
-
-# test_last_diff_y = [y[25] for y in test_last_diff_y]
-# test_last_diff_y = lb.fit_transform(test_last_diff_y)
-# test_last_diff_y = test_last_diff_y.reshape(-1,1)
-
-# tree = DecisionTreeClassifier()
-# tree.fit(last_diff_x, last_diff_y)
-# print(tree.score(test_last_diff_x, test_last_diff_y))
-
-
-# reg = LogisticRegression(solver='lbfgs', max_iter=1000)
-# reg.fit(last_diff_x, last_diff_y)
-# print(reg.score(test_last_diff_x, test_last_diff_y))
-
-
-# clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(3,2), random_state=1)
-# # clf.fit(last_diff_x, last_diff_y)
-# # print(clf.score(test_last_diff_x, test_last_diff_y))
-
-# clf.fit(test_last_diff_x, test_last_diff_y)
-# print(clf.score(last_diff_x, last_diff_y))
-
-# def decision_tree():
-
-
-
-
-# def naive_bayes():
-
-
-
-# def logistic_regression():
-
-
-# def svm():
-
-
-
-
-
-# import tensorflow
-# from tensorflow import keras
-# from keras import Sequential
-# from keras.layers import *
-# import numpy as np
-
-
-# model = Sequential(
-#     [
-#         # keras.layers.CategoryEncoding(num_tokens=2, output_)
-#         # keras.layers.Input(shape=(1,), name='input_1'),
-#         keras.layers.Dense(10, activation="relu"),
-#         keras.layers.Dense(1, activation="sigmoid"),
-#         # keras.layers.Dense(10, activation="relu"),
-#     ]
-# )
-
-# model.compile(optimizer='rmsprop', loss='mse')
-
-# n = np.array(test)
-# model.fit(np.array(test), np.array(test_y), batch_size=10, epochs=14)
+def sort(list):
+    input = []
+    output = []
+    # first speaker = 0, second speaker = 1
+    for i in list:
+        for j in range(max(len(i[0]), len(i[1]))):
+            if j < len(i[1]):
+                input.append(i[0][j])
+                output.append(i[1][j][0])
+            if j+1 < len(i[0]):
+                input.append(i[1][j])
+                output.append(i[0][j+1][0])
+    return input, output
