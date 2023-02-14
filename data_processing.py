@@ -1,7 +1,8 @@
-from setup import get_data, get_additional_data
+from setup import get_data, get_woz_data
 import pandas as pd
 
-list = get_data()
+list_hh = get_data()
+list_woz = get_woz_data()
 
 
 # Replace IDE States
@@ -195,7 +196,7 @@ def raw_data():
     # print(len(list))
     return list
 
-def preprocessed_ide(idx):
+def preprocessed_ide(list, idx):
     first_speaker = []
     second_speaker = []
 
@@ -230,12 +231,13 @@ def preprocessed_ide(idx):
     # print(first_speaker)
     return first_speaker,second_speaker
 
-def preprocessed_dialogue(idx):
+def preprocessed_dialogue(list, idx):
     first_speaker = []
     second_speaker = []
 
     curr_speaker = ' '
     is_firstSpeaker = False
+    # print(len(list))
     temp = list[idx][['Speaker','Dialogue State']].values
     # temp = list[idx].values
     # print(temp)
